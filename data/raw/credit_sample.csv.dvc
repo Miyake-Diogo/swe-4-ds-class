@@ -1,0 +1,5 @@
+outs:
+- md5: 88df190336dc7646108dd3e1eb155dfc
+  size: 105898
+  hash: md5
+  path: credit_sample.csv
