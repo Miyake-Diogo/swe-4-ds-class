@@ -14,8 +14,8 @@ from sklearn.preprocessing import StandardScaler
 
 # URL do dataset UCI Credit Card Default
 DATASET_URL = (
-    "https://archive.ics.uci.edu/ml/machine-learning-databases/"
-    "00350/default%20of%20credit%20card%20clients.xls"
+    "https://archive.ics.uci.edu/static/public/"
+    "350/default+of+credit+card+clients.zip"
 )
 
 
