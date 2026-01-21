@@ -13,11 +13,20 @@ from sklearn.preprocessing import StandardScaler
 
 
 # URL do dataset UCI Credit Card Default
-DATASET_URL = (
+# URL primária (UCI oficial)
+DATASET_URL_PRIMARY = (
     "https://archive.ics.uci.edu/static/public/"
     "350/default+of+credit+card+clients.zip"
 )
 
+# URL de fallback (mirror GitHub)
+DATASET_URL_FALLBACK = (
+    "https://raw.githubusercontent.com/dados-ml/"
+    "credit-default/main/data.csv"
+)
+
+# URL padrão
+DATASET_URL = DATASET_URL_PRIMARY
 
 def load_credit_data(
     filepath: Optional[Path] = None,
