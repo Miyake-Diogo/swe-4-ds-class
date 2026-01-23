@@ -74,7 +74,6 @@ def preprocess_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
     
     return X, y
 
-
 def get_feature_names(df: pd.DataFrame) -> List[str]:
     """
     Retorna lista de nomes de features (exclui ID e target).
