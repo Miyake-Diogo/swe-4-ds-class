@@ -38,7 +38,7 @@ jobs:
       - name: Instalar dependências
         run: |
           uv sync
-          source venv/bin/activate
+          source .venv/bin/activate
       
       # 5. Rodar testes com cobertura
       - name: Executar testes
