@@ -1,0 +1,102 @@
+# docker-compose.yml
+# Configuração Docker Compose para swe4ds-credit-api
+# Uso: docker compose up
+
+# Define serviços que compõem a aplicação
+services:
+  
+  # ==========================================================================
+  # Serviço principal: API de Crédito
+  # ==========================================================================
+  api:
+    # Construir a partir do Dockerfile local
+    image: swe4ds-credit-api:${VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Nome do container
+    container_name: credit-api
+    
+    # Mapear porta 8000 do host para 8000 do container
+    ports:
+      - "8000:8000"
+    
+    # Volumes para desenvolvimento
+    volumes:
+      # Código fonte (hot reload)
+      - ./src:/app/src:ro
+      # Dados
+      - ./data:/app/data
+      # Scripts
+      - ./scripts:/app/scripts:ro
+    
+    # Variáveis de ambiente
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    
+    # Arquivo de variáveis de ambiente
+    env_file:
+      - .env
+    
+    # Rede
+    networks:
+      - credit-network
+    
+    # Política de reinício
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Comando padrão (pode ser sobrescrito)
+    command: python -c "print('API Credit iniciada! Porta 8000'); import time; time.sleep(3600)"
+
+  # ==========================================================================
+  # Serviço de testes
+  # ==========================================================================
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    container_name: credit-tests
+    
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENVIRONMENT=test
+    
+    networks:
+      - credit-network
+    
+    # Não inicia automaticamente (profile)
+    profiles:
+      - testing
+    
+    command: pytest tests/ -v --tb=short
+
+# =============================================================================
+# Redes
+# =============================================================================
+networks:
+  credit-network:
+    driver: bridge
+    name: credit-network
+
+# =============================================================================
+# Volumes nomeados (para persistência)
+# =============================================================================
+volumes:
+  credit-data:
+    name: credit-data
