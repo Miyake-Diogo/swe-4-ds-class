@@ -1,145 +1,89 @@
+# src/data_loader.py
 """
-Módulo de carregamento e preprocessamento de dados.
-
-Este módulo é responsável por carregar o dataset de inadimplência
-de cartão de crédito e preparar os dados para treinamento/inferência.
+Módulo para carregamento e preprocessamento de dados de crédito.
 """
-import pandas as pd
-import numpy as np
 from pathlib import Path
-from typing import Tuple, Optional
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from typing import Tuple, List
+import pandas as pd
 
-
-# URL do dataset UCI Credit Card Default
-# URL primária (UCI oficial)
-DATASET_URL_PRIMARY = (
-    "https://archive.ics.uci.edu/static/public/"
-    "350/default+of+credit+card+clients.zip"
-)
-
-# URL de fallback (mirror GitHub)
-DATASET_URL_FALLBACK = (
-    "https://raw.githubusercontent.com/dados-ml/"
-    "credit-default/main/data.csv"
-)
-
-# URL padrão
-DATASET_URL = DATASET_URL_PRIMARY
 
 def load_credit_data(
-    filepath: Optional[Path] = None,
+    filepath: Path | None = None,
     use_cache: bool = True
 ) -> pd.DataFrame:
     """
-    Carrega o dataset de inadimplência de cartão de crédito.
+    Carrega dados de crédito de arquivo CSV ou cache.
     
     Args:
-        filepath: Caminho para arquivo local. Se None, baixa da UCI.
-        use_cache: Se True, salva/carrega de cache local.
-    
+        filepath: Caminho para arquivo CSV. Se None, usa padrão.
+        use_cache: Se True, tenta carregar de cache parquet.
+        
     Returns:
-        DataFrame com os dados brutos.
+        DataFrame com dados de crédito.
         
     Raises:
-        FileNotFoundError: Se filepath especificado não existir.
-        ValueError: Se dados estiverem corrompidos.
+        FileNotFoundError: Se arquivo não existe.
+        ValueError: Se dados estão vazios.
     """
-    cache_path = Path("data/credit_data.parquet")
+    if filepath is None:
+        filepath = Path("data/raw/UCI_Credit_Card.csv")
     
-    # Tentar carregar do cache
+    cache_path = Path("data/processed/credit_cache.parquet")
+    
     if use_cache and cache_path.exists():
-        print(f"Carregando dados do cache: {cache_path}")
         return pd.read_parquet(cache_path)
     
-    # Carregar de arquivo local ou URL
-    if filepath is not None:
-        if not filepath.exists():
-            raise FileNotFoundError(f"Arquivo não encontrado: {filepath}")
-        print(f"Carregando dados de: {filepath}")
-        df = pd.read_excel(filepath, header=1)
-    else:
-        print(f"Baixando dados de: {DATASET_URL}")
-        df = pd.read_excel(DATASET_URL, header=1)
+    if not filepath.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {filepath}")
     
-    # Validar dados
+    df = pd.read_csv(filepath)
+    
     if df.empty:
-        raise ValueError("Dataset vazio!")
+        raise ValueError("Dataset está vazio")
     
-    # Salvar cache
     if use_cache:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_parquet(cache_path)
-        print(f"Cache salvo em: {cache_path}")
     
     return df
 
 
-def preprocess_data(
-    df: pd.DataFrame,
-    target_column: str = "default payment next month",
-    test_size: float = 0.2,
-    random_state: int = 42
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
+def preprocess_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
     """
-    Preprocessa os dados para treinamento.
+    Preprocessa dados separando features e target.
     
     Args:
         df: DataFrame com dados brutos.
-        target_column: Nome da coluna alvo.
-        test_size: Proporção do conjunto de teste.
-        random_state: Seed para reprodutibilidade.
-    
+        
     Returns:
-        Tupla com (X_train, X_test, y_train, y_test, scaler).
+        Tupla (features DataFrame, target Series).
+        
+    Raises:
+        KeyError: Se coluna target não existe.
     """
-    # Remover coluna ID
-    df = df.drop(columns=["ID"], errors="ignore")
+    target_col = "default payment next month"
     
-    # Separar features e target
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
+    if target_col not in df.columns:
+        raise KeyError(f"Coluna target '{target_col}' não encontrada")
     
-    # Split treino/teste
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, 
-        test_size=test_size, 
-        random_state=random_state,
-        stratify=y
-    )
+    # Remover ID e target das features
+    feature_cols = [c for c in df.columns if c not in ["ID", target_col]]
     
-    # Normalizar features
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X = df[feature_cols]
+    y = df[target_col]
     
-    return X_train_scaled, X_test_scaled, y_train.values, y_test.values, scaler
+    return X, y
 
 
-def get_feature_names() -> list:
+def get_feature_names(df: pd.DataFrame) -> List[str]:
     """
-    Retorna os nomes das features do dataset.
+    Retorna lista de nomes de features (exclui ID e target).
     
+    Args:
+        df: DataFrame com dados.
+        
     Returns:
-        Lista com nomes das features.
+        Lista de nomes de colunas.
     """
-    return [
-        "LIMIT_BAL", "SEX", "EDUCATION", "MARRIAGE", "AGE",
-        "PAY_0", "PAY_2", "PAY_3", "PAY_4", "PAY_5", "PAY_6",
-        "BILL_AMT1", "BILL_AMT2", "BILL_AMT3", "BILL_AMT4", "BILL_AMT5", "BILL_AMT6",
-        "PAY_AMT1", "PAY_AMT2", "PAY_AMT3", "PAY_AMT4", "PAY_AMT5", "PAY_AMT6"
-    ]
-
-
-if __name__ == "__main__":
-    # Teste rápido do módulo
-    print("Testando data_loader...")
-    
-    # Nota: Descomentar para testar (requer internet)
-    # df = load_credit_data()
-    # print(f"Shape: {df.shape}")
-    # print(f"Colunas: {df.columns.tolist()}")
-    
-    print("Módulo carregado com sucesso!")
-    print(f"Features disponíveis: {len(get_feature_names())}")
+    exclude = ["ID", "default payment next month"]
+    return [c for c in df.columns if c not in exclude]
