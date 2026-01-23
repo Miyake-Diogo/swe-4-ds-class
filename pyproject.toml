@@ -7,3 +7,38 @@ requires-python = ">=3.12"
 dependencies = [
     "scikit-learn>=1.8.0",
 ]
+
+[tool.pytest.ini_options]
+# Diretório de testes
+testpaths = ["tests"]
+
+# Padrões de descoberta
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+
+# Opções de execução
+addopts = [
+    "-v",                    # Verbose
+    "--tb=short",            # Traceback curto
+    "--strict-markers",      # Markers devem ser registrados
+]
+
+# Markers customizados
+markers = [
+    "slow: marca testes lentos",
+    "integration: marca testes de integração",
+    "e2e: marca testes end-to-end",
+]
+
+[tool.coverage.run]
+# Configuração de cobertura
+source = ["src"]
+omit = ["tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+# Relatório de cobertura
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
