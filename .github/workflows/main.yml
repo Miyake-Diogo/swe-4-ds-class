@@ -39,6 +39,7 @@ jobs:
         run: |
           uv sync
           source .venv/bin/activate
+          uv pip install --system pytest pytest-cov
       
       # 5. Rodar testes com cobertura
       - name: Executar testes
