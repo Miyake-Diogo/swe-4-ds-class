@@ -1,0 +1,57 @@
+# Triggers Acionadores
+# Job Trabalho ou Funcionamento
+# Steps Etapas dos Jobs - Comandos
+# Runners Maquinas virtuais
+
+name: main 
+
+on:
+  push:
+    branches: [main]
+  pull_request: 
+    branches:
+      - main
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    name: Testes Unitarios
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+      
+      - name: Configurar o python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      # 4. Instalar dependências
+      - name: Instalar dependências
+        run: |
+          uv sync
+          uv pip install --system pytest pytest-cov
+      
+      # 5. Rodar testes com cobertura
+      - name: Executar testes
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+      
+      # 6. Upload do relatório de cobertura (opcional)
+      - name: Upload cobertura para Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
