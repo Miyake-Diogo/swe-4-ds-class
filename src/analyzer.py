@@ -1,19 +1,37 @@
-def analyze(client_data, approval_threshold=0.5):
-    # valida presença
-    if client_data is None:
-        return {"error": "no data"}
-    if "age" not in client_data:
-        return {"error": "no age"}
-    if "limit" not in client_data:
-        return {"error": "no limit"}
-    if "history" not in client_data:
-        return {"error": "no history"}
+REQUIRED_FIELDS = ["age", "limit", "history"]
+MIN_AGE = 18
+MAX_AGE = 120
+
+
+def _validate_client_data(client_data: dict | None) -> str | None:
+    """Valida dados do cliente.
     
-    # valida valores
-    if client_data["age"] < 18 or client_data["age"] > 120:
-        return {"error": "invalid age"}
+    Returns:
+        Mensagem de erro ou None se válido.
+    """
+    if client_data is None:
+        return "no data"
+    
+    # Verifica campos obrigatórios
+    for field in REQUIRED_FIELDS:
+        if field not in client_data:
+            return f"no {field}"
+    
+    # Valida valores
+    if not (MIN_AGE <= client_data["age"] <= MAX_AGE):
+        return "invalid age"
     if client_data["limit"] <= 0:
-        return {"error": "invalid limit"}
+        return "invalid limit"
+    
+    return None
+
+
+
+def analyze(client_data: dict | None, approval_threshold: float = 0.5) -> dict | None:
+    # Validação extraída
+    error = _validate_client_data(client_data)
+    if error:
+        return {"error": error}
     
     # calcula score
     score = 0
