@@ -9,7 +9,6 @@ Engenharia de Machine Learning.
 
 Uso básico:
     from src import validate_limit_bal, validate_age
-    
     is_valid = validate_limit_bal(50000)
 """
 

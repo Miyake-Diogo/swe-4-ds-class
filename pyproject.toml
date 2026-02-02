@@ -36,8 +36,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0,<9.0",
-    "pytest-cov>=4.0,<6.0",
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
     "ruff>=0.1,<1.0",
     "taskipy>=1.12,<2.0",
 ]
@@ -186,3 +186,4 @@ format = "ruff format src/ tests/"
 format-check = "ruff format src/ tests/ --check"
 check = "task lint && task format-check && task test"
 clean = "rm -rf .pytest_cache .coverage htmlcov __pycache__ .ruff_cache"
+
