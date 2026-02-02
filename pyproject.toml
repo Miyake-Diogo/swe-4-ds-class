@@ -18,7 +18,7 @@ dependencies = [
 testpaths = ["tests"]
 
 # Padrões de descoberta
-python_files = ["test_*.py"]
+python_files = ["test_*.py", "*_test.py"]
 python_functions = ["test_*"]
 python_classes = ["Test*"]
 
@@ -39,11 +39,105 @@ markers = [
 [tool.coverage.run]
 # Configuração de cobertura
 source = ["src"]
-omit = ["tests/*", "*/__init__.py"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
 
 [tool.coverage.report]
 # Relatório de cobertura
 exclude_lines = [
     "pragma: no cover",
-    "if __name__ == .__main__.:",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
 ]
+fail_under = 70
+show_missing = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.14",
+    "taskipy>=1.14.1",
+]
+
+
+# =============================================================================
+# RUFF - Linter e Formatador
+# =============================================================================
+[tool.ruff]
+# Versão do Python alvo
+target-version = "py312"
+
+# Tamanho máximo de linha
+line-length = 88
+
+# Diretórios a verificar
+src = ["src", "tests"]
+
+# Arquivos/pastas a ignorar
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+# Regras a habilitar
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (ordenação de imports)
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+]
+
+# Regras a ignorar
+ignore = [
+    "E501",   # line too long (formatador cuida)
+    "B008",   # function call in argument defaults
+]
+
+# Permitir correção automática para todas as regras habilitadas
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+# Testes podem ter imports não usados (fixtures)
+"tests/*" = ["F401"]
+
+[tool.ruff.lint.isort]
+# Configuração do ordenador de imports
+known-first-party = ["src"]
+
+[tool.ruff.format]
+# Estilo de aspas
+quote-style = "double"
+
+# Indentação
+indent-style = "space"
+
+# Final de linha
+line-ending = "auto"
+
+# =============================================================================
+# TASKPY - Alias e Automação
+# =============================================================================
+[tool.taskipy.tasks]
+test = "pytest tests/ -v"
+test-cov = "pytest tests/ -v --cov=src --cov-report=html --cov-report=term"
+lint = "ruff check src/ tests/"
+lint-fix = "ruff check src/ tests/ --fix"
+format = "ruff format src/ tests/"
+format-check = "ruff format src/ tests/ --check"
+check = "task lint && task format-check && task test"
+clean = "rm -rf .pytest_cache .coverage htmlcov __pycache__ .ruff_cache"
